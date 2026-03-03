@@ -61,6 +61,9 @@ async function executeOperation(operation: OperationType, params: unknown): Prom
     case 'append':
       return handleAppend(params as Parameters<typeof handleAppend>[0]);
 
+    case 'list-children':
+      return handleListChildren(params as { target?: string; depth?: number });
+
     case 'list-components':
       return handleListComponents(params as Parameters<typeof handleListComponents>[0]);
 
@@ -118,6 +121,40 @@ async function handleQuery(params: { target: string }) {
   }
   const serialized = await serializeNode(node, true);
   return { node: serialized, nodes: [serialized] };
+}
+
+async function handleListChildren(params: { target?: string; depth?: number }) {
+  let parentNode: BaseNode & ChildrenMixin;
+
+  if (!params.target || params.target === 'page') {
+    parentNode = figma.currentPage;
+  } else if (params.target === 'selection') {
+    const sel = figma.currentPage.selection;
+    if (sel.length === 0) throw new Error('Nothing selected');
+    if (!('children' in sel[0])) throw new Error('Selected node has no children');
+    parentNode = sel[0] as BaseNode & ChildrenMixin;
+  } else {
+    const node = await figma.getNodeByIdAsync(params.target);
+    if (!node) throw new Error(`Node not found: ${params.target}`);
+    if (!('children' in node)) throw new Error('Node has no children');
+    parentNode = node as BaseNode & ChildrenMixin;
+  }
+
+  const children = parentNode.children.map((child: SceneNode) => ({
+    id: child.id,
+    name: child.name,
+    type: child.type,
+    width: 'width' in child ? (child as any).width : 0,
+    height: 'height' in child ? (child as any).height : 0,
+    childCount: 'children' in child ? (child as any).children.length : 0,
+  }));
+
+  return {
+    parentId: parentNode.id,
+    parentName: parentNode.name,
+    parentType: parentNode.type,
+    children,
+  };
 }
 
 // Keep plugin running

@@ -30,6 +30,7 @@ export type OperationType =
   | 'modify'
   | 'delete'
   | 'append'
+  | 'list-children'
   | 'list-components'
   | 'to-component'
   | 'create-variants'
@@ -40,6 +41,27 @@ export type OperationType =
   | 'sync-tokens'
   | 'export';
 
+export interface ListChildrenParams {
+  target?: string; // node ID, 'selection', or omit for current page
+  depth?: number;  // 0 = direct children only (default), 1 = one level deep
+}
+
+export interface ListChildrenResult {
+  parentId: string;
+  parentName: string;
+  parentType: string;
+  children: ChildInfo[];
+}
+
+export interface ChildInfo {
+  id: string;
+  name: string;
+  type: string;
+  width: number;
+  height: number;
+  childCount: number;
+}
+
 export type OperationParams =
   | StatusParams
   | QueryParams
@@ -47,6 +69,7 @@ export type OperationParams =
   | ModifyParams
   | DeleteParams
   | AppendParams
+  | ListChildrenParams
   | ListComponentsParams
   | ToComponentParams
   | CreateVariantsParams
