@@ -24,6 +24,8 @@ export async function handleCreate(params: CreateParams): Promise<CreateResult> 
     case 'FRAME':
       node = await createFrame(params, defaults);
       break;
+    case 'SLIDE':
+      return await createSlide(params);
     case 'TEXT':
       node = await createText(params, defaults);
       break;
@@ -119,6 +121,8 @@ function getFigmaType(type: string): string {
     case 'nav':
     case 'input':
       return 'FRAME';
+    case 'slide':
+      return 'SLIDE';
     case 'text':
       return 'TEXT';
     case 'rect':
@@ -289,6 +293,35 @@ async function createFrame(
   }
 
   return frame;
+}
+
+async function createSlide(params: CreateParams): Promise<CreateResult> {
+  const slide = (figma as any).createSlide();
+
+  slide.name = params.name || 'Slide';
+
+  if (params.fill) {
+    const color = parseColor(params.fill);
+    if (color) {
+      slide.fills = [{ type: 'SOLID', color: { r: color.r, g: color.g, b: color.b }, opacity: color.a }];
+    }
+  }
+
+  if (params.children && params.children.length > 0) {
+    for (const childParams of params.children) {
+      const childResult = await handleCreate(childParams);
+      const childNode = await figma.getNodeByIdAsync(childResult.nodeId);
+      if (childNode && 'parent' in childNode) {
+        slide.appendChild(childNode as SceneNode);
+      }
+    }
+  }
+
+  return {
+    nodeId: slide.id,
+    name: slide.name,
+    type: slide.type || 'SLIDE',
+  };
 }
 
 async function createText(

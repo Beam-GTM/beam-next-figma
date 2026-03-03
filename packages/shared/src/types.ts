@@ -179,6 +179,7 @@ export interface ConstraintsConfig {
 
 export type ElementType =
   | 'frame'
+  | 'slide'
   | 'text'
   | 'rect'
   | 'rectangle'

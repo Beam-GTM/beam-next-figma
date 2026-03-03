@@ -7,6 +7,7 @@ import type { CreateParams, ElementType, LayoutConfig, EffectConfig, GradientCon
 // Default values for element creation
 export const DEFAULT_DIMENSIONS: Record<ElementType, { width: number; height: number }> = {
   frame: { width: 100, height: 100 },
+  slide: { width: 1920, height: 1080 },
   text: { width: 100, height: 20 },
   rect: { width: 100, height: 100 },
   rectangle: { width: 100, height: 100 },
