@@ -137,6 +137,9 @@ export interface CreateParams {
   // Transform
   rotation?: number; // Rotation in degrees
   blendMode?: BlendModeType;
+  // Image fill (base64 PNG/JPG data)
+  imageData?: string;
+  imageScaleMode?: 'FILL' | 'FIT' | 'CROP' | 'TILE';
   // Frame properties
   clipsContent?: boolean;
   // Constraints (for responsive design)

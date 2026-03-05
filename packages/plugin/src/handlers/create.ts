@@ -192,8 +192,12 @@ async function createFrame(
     frame.bottomRightRadius = params.bottomRightRadius;
   }
 
+  // Apply image fill (highest priority)
+  if (params.imageData) {
+    await applyImageFill(frame, params.imageData, params.imageScaleMode || 'FILL');
+  }
   // Apply gradient fill (overrides solid fill)
-  if (params.gradient) {
+  else if (params.gradient) {
     const gradientPaint = gradientToFigma(params.gradient, frame.width, frame.height);
     frame.fills = [gradientPaint as unknown as Paint];
   }
@@ -300,11 +304,20 @@ async function createSlide(params: CreateParams): Promise<CreateResult> {
 
   slide.name = params.name || 'Slide';
 
-  if (params.fill) {
+  // Gradient fill takes priority over solid fill
+  if (params.gradient) {
+    const gradientPaint = gradientToFigma(params.gradient, 1920, 1080);
+    slide.fills = [gradientPaint as unknown as Paint];
+  } else if (params.fill) {
     const color = parseColor(params.fill);
     if (color) {
       slide.fills = [{ type: 'SOLID', color: { r: color.r, g: color.g, b: color.b }, opacity: color.a }];
     }
+  }
+
+  // Apply effects (shadows, blur)
+  if (params.effects && params.effects.length > 0) {
+    slide.effects = params.effects.map(effect => effectToFigma(effect) as unknown as Effect);
   }
 
   if (params.children && params.children.length > 0) {
@@ -322,6 +335,18 @@ async function createSlide(params: CreateParams): Promise<CreateResult> {
     name: slide.name,
     type: slide.type || 'SLIDE',
   };
+}
+
+async function applyImageFill(node: GeometryMixin, imageData: string, scaleMode: string = 'FILL') {
+  const raw = atob(imageData);
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  const image = figma.createImage(bytes);
+  node.fills = [{
+    type: 'IMAGE',
+    imageHash: image.hash,
+    scaleMode: scaleMode as 'FILL' | 'FIT' | 'CROP' | 'TILE',
+  }];
 }
 
 async function createText(
@@ -440,8 +465,12 @@ async function createRectangle(
     }
   }
 
+  // Apply image fill (highest priority)
+  if (params.imageData) {
+    await applyImageFill(rect, params.imageData, params.imageScaleMode || 'FILL');
+  }
   // Apply gradient fill (overrides solid fill)
-  if (params.gradient) {
+  else if (params.gradient) {
     const gradientPaint = gradientToFigma(params.gradient, rect.width, rect.height);
     rect.fills = [gradientPaint as unknown as Paint];
   }
