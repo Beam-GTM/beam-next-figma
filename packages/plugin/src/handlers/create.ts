@@ -26,6 +26,9 @@ export async function handleCreate(params: CreateParams): Promise<CreateResult> 
       break;
     case 'SLIDE':
       return await createSlide(params);
+    case 'SVG':
+      node = await createSvg(params);
+      break;
     case 'TEXT':
       node = await createText(params, defaults);
       break;
@@ -132,6 +135,8 @@ function getFigmaType(type: string): string {
       return 'ELLIPSE';
     case 'line':
       return 'LINE';
+    case 'svg':
+      return 'SVG';
     default:
       return 'FRAME';
   }
@@ -347,6 +352,50 @@ async function applyImageFill(node: GeometryMixin, imageData: string, scaleMode:
     imageHash: image.hash,
     scaleMode: scaleMode as 'FILL' | 'FIT' | 'CROP' | 'TILE',
   }];
+}
+
+async function createSvg(params: CreateParams): Promise<SceneNode> {
+  const svgString = params.svgData || params.content || '';
+  if (!svgString) {
+    throw new Error('SVG creation requires svgData or content with an SVG string');
+  }
+
+  const svgNode = figma.createNodeFromSvg(svgString);
+  svgNode.name = params.name || 'SVG';
+
+  if (params.width !== undefined && params.height !== undefined) {
+    svgNode.resize(params.width, params.height);
+  } else if (params.width !== undefined) {
+    const ratio = params.width / svgNode.width;
+    svgNode.resize(params.width, svgNode.height * ratio);
+  } else if (params.height !== undefined) {
+    const ratio = params.height / svgNode.height;
+    svgNode.resize(svgNode.width * ratio, params.height);
+  }
+
+  if (params.x !== undefined) svgNode.x = params.x;
+  if (params.y !== undefined) svgNode.y = params.y;
+
+  if (params.rotation !== undefined) {
+    svgNode.rotation = params.rotation;
+  }
+
+  if (params.blendMode) {
+    svgNode.blendMode = params.blendMode;
+  }
+
+  // Recolor all vector children if a fill is specified
+  if (params.fill) {
+    const color = parseColor(params.fill);
+    if (color) {
+      const paint: SolidPaint = { type: 'SOLID', color: { r: color.r, g: color.g, b: color.b }, opacity: color.a };
+      svgNode.findAll(n => n.type === 'VECTOR').forEach(v => {
+        (v as VectorNode).fills = [paint];
+      });
+    }
+  }
+
+  return svgNode;
 }
 
 async function createText(

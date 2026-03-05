@@ -140,6 +140,8 @@ export interface CreateParams {
   // Image fill (base64 PNG/JPG data)
   imageData?: string;
   imageScaleMode?: 'FILL' | 'FIT' | 'CROP' | 'TILE';
+  // SVG import (raw SVG string — creates a vector group)
+  svgData?: string;
   // Frame properties
   clipsContent?: boolean;
   // Constraints (for responsive design)
@@ -211,6 +213,7 @@ export type ElementType =
   | 'rectangle'
   | 'ellipse'
   | 'line'
+  | 'svg'
   | 'card'
   | 'button'
   | 'form'

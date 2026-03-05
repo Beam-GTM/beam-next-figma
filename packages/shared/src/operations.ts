@@ -13,6 +13,7 @@ export const DEFAULT_DIMENSIONS: Record<ElementType, { width: number; height: nu
   rectangle: { width: 100, height: 100 },
   ellipse: { width: 100, height: 100 },
   line: { width: 100, height: 0 },
+  svg: { width: 24, height: 24 },
   card: { width: 320, height: 200 },
   button: { width: 120, height: 40 },
   form: { width: 400, height: 300 },
